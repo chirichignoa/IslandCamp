@@ -1,31 +1,37 @@
 package com.upgrade.codechallenge.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.google.gson.annotations.JsonAdapter;
+import com.upgrade.codechallenge.util.ReservationGsonAdapter;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
+@JsonAdapter(ReservationGsonAdapter.class)
 public class Reservation {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name="arrival_date", unique=true)
     private LocalDate arrivalDate;
+    @Column(name="departure_date")
     private LocalDate departureDate;
     private String name;
     private String email;
+    @Column(name="resource_id")
+    private String resourceId;
 
-    protected Reservation() {}
+    public Reservation() {}
 
-    public Reservation(LocalDate arrivalDate, LocalDate departureDate, String name, String email) {
+    public Reservation(LocalDate arrivalDate, LocalDate departureDate, String name, String email, String resourceId) {
         this.arrivalDate = arrivalDate;
         this.departureDate = departureDate;
         this.name = name;
         this.email = email;
+        this.resourceId = resourceId;
     }
 
     public Long getId() {
@@ -36,7 +42,7 @@ public class Reservation {
         this.id = id;
     }
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     public LocalDate getArrivalDate() {
         return arrivalDate;
     }
@@ -72,6 +78,14 @@ public class Reservation {
         this.email = email;
     }
 
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
+    }
+
     @Override
     public String toString() {
         StringBuilder ret = new StringBuilder();
@@ -88,15 +102,11 @@ public class Reservation {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Reservation that = (Reservation) o;
-        return id.equals(that.id) &&
-                arrivalDate.equals(that.arrivalDate) &&
-                departureDate.equals(that.departureDate) &&
-                name.equals(that.name) &&
-                email.equals(that.email);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, arrivalDate, departureDate, name, email);
+        return Objects.hash(id, arrivalDate, departureDate, name, email, resourceId);
     }
 }

@@ -12,7 +12,7 @@ public class ResponseJsonSerializer implements JsonSerializer<Response> {
         Gson gson = new Gson();
         JsonObject json = new JsonObject();
         json.addProperty("error", response.getError());
-        json.addProperty("content", response.getContent());
+        json.addProperty("content", gson.toJson(response.getContent()));
         return json;
     }
 

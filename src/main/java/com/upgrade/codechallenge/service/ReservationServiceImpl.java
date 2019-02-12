@@ -1,14 +1,19 @@
 package com.upgrade.codechallenge.service;
 
 import com.google.gson.Gson;
+import com.upgrade.codechallenge.exception.OcuppedDateRangeException;
 import com.upgrade.codechallenge.model.Reservation;
 import com.upgrade.codechallenge.repository.ReservationRepository;
 import com.upgrade.codechallenge.util.Response;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -19,71 +24,157 @@ public class ReservationServiceImpl implements ReservationService {
     private ReservationRepository reservationRepository;
 
     @Override
+    @Transactional
+    public Response saveReservation(Reservation body) {
+        if(body.getArrivalDate() == null) {
+            return new Response("You must specify an arrival date.", null, HttpStatus.BAD_REQUEST);
+        }
+        if(body.getDepartureDate() == null) {
+            return new Response("You must specify an departure date.", null, HttpStatus.BAD_REQUEST);
+        }
+
+        Response x = validateDates(body);
+        if (x != null) return x;
+        try {
+            String resourceId = UUID.randomUUID().toString();
+            long daysBetween = DAYS.between(body.getArrivalDate(), body.getDepartureDate());
+            for (int i = 0; i < daysBetween; i++) {
+                Reservation reservation = new Reservation(body.getArrivalDate().plusDays(i),
+                        body.getArrivalDate().plusDays(i + 1),
+                        body.getName(),
+                        body.getEmail(),
+                        resourceId);
+                this.reservationRepository.save(reservation);
+            }
+            return new Response(null, resourceId, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new OcuppedDateRangeException("The camp is already reserved for that date range.");
+        }
+    }
+
+    @Override
     public Response getReservations(LocalDate arrivalDate, LocalDate departureDate) {
-        Gson gson = new Gson();
         if(arrivalDate == null) {
             return new Response("You must specify an arrival date.", null, HttpStatus.BAD_REQUEST);
         }
         if(departureDate == null) {
             departureDate = arrivalDate.plusDays(30);
         } else if(arrivalDate.isAfter(departureDate)) {
-            return new Response("Arrival date is greather than departure date.", null, HttpStatus.BAD_REQUEST);
+            return new Response("Arrival date is greater than departure date.", null, HttpStatus.BAD_REQUEST);
         }
         return new Response(null,
-                gson.toJson(this.reservationRepository.findByArrivalDateGreaterThanEqualAndDepartureDateLessThanEqual(arrivalDate,departureDate)),
+                this.reservationRepository.findByArrivalDateGreaterThanEqualAndDepartureDateLessThanEqual(arrivalDate,departureDate),
                 HttpStatus.OK);
     }
 
     @Override
-    public Response saveReservation(Reservation reservation) {
-        Gson gson = new Gson();
-        if(reservation.getArrivalDate() == null) {
-            return new Response("You must specify an arrival date.", null, HttpStatus.BAD_REQUEST);
+    public Response getReservation(String id) {
+        List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
+        if(reservations == null || reservations.size() == 0) {
+            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
         }
-        if(reservation.getDepartureDate() == null) {
-            return new Response("You must specify an departure date.", null, HttpStatus.BAD_REQUEST);
-        }
+        return new Response(null,
+                reservations,
+                HttpStatus.OK);
+    }
 
-        // verificar que la fecha de hoy sea menor a un mes hasta el dia de la reserva (se puede reservar hasta un mes antes)
-        // ** TODO: method for validate dates
+    @Override
+    @Transactional
+    public Response updateReservation(String id, Reservation reservation) {
+        List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
+        if(reservations == null || reservations.size() == 0) {
+            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
+        }
+        Response x = validateDates(reservation);
+        if (x != null) return x;
+        int daysBetween = (int) DAYS.between(reservation.getArrivalDate(), reservation.getDepartureDate());
+        if(daysBetween != reservations.size()) {
+            return new Response("The new reservation's duration must be the same than the previous", null, HttpStatus.BAD_REQUEST);
+        }
+        LocalDate previousDate =  reservation.getDepartureDate();
+        // Reverse order for avoid the unique constraint violation in the BD
+        // I assume that the modification maintains the same amount of days
+        try {
+            for (int i = daysBetween - 1; i >= 0; i--) {
+                Reservation r = reservations.get(i);
+                this.reservationRepository.updateReservationDates(previousDate.minusDays(1),
+                        previousDate,
+                        r.getId());
+                previousDate = previousDate.minusDays(1);
+            }
+            return new Response(null, id, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new OcuppedDateRangeException("The camp is already reserved for that date range.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public Response modifyReservation(String id, Reservation reservation) {
+        List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
+        if(reservations == null || reservations.size() == 0) {
+            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
+        }
+        Response x = validateDates(reservation);
+        if (x != null) return x;
+        int newDaysBetween = (int) DAYS.between(reservation.getArrivalDate(), reservation.getDepartureDate());
+        if(newDaysBetween != reservations.size()) {
+            return new Response("The new reservation's duration must be the same than the previous", null, HttpStatus.BAD_REQUEST);
+        }
+        LocalDate previousDate =  reservation.getDepartureDate();
+        // Reverse order for avoid the unique constraint violation in the BD
+        // I assume that the modification maintains the same amount of days
+        try {
+            for (int i = newDaysBetween - 1; i >= 0; i--) {
+                Reservation r = reservations.get(i);
+//                r.setArrivalDate(previousDate.minusDays(1));
+//                r.setDepartureDate(previousDate);
+//                r.setName(reservation.getName());
+//                r.setEmail(reservation.getEmail());
+//                this.reservationRepository.save(r);
+                this.reservationRepository.modifyReservation(reservation.getName(),
+                                                            reservation.getEmail(),
+                                                            previousDate.minusDays(1),
+                                                            previousDate,
+                                                            r.getId());
+                previousDate = previousDate.minusDays(1);
+            }
+            return new Response(null, id, HttpStatus.OK);
+        } catch (Exception e ) {
+            throw new OcuppedDateRangeException("The camp is already reserved for that date range.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public Response deleteReservation(String id) {
+        List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
+        if(reservations == null || reservations.size() == 0) {
+            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
+        }
+        try {
+            for (Reservation reservation : reservations) {
+                this.reservationRepository.delete(reservation);
+            }
+            return new Response(null, null, HttpStatus.OK);
+        } catch (Exception e) {
+            return new Response("There is an internal problem in the server.", null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private Response validateDates(Reservation reservation) {
+        if(reservation.getArrivalDate().isAfter(reservation.getDepartureDate())) {
+            return new Response("The arrival date is greater than departure date.", null, HttpStatus.BAD_REQUEST);
+        }
         LocalDate now = LocalDate.now();
         long daysBetween = DAYS.between(now, reservation.getArrivalDate());
-        // if daysBetween < 1
         if(daysBetween < 1 || daysBetween > 30) {
             return new Response("The campsite can be reserved minimum 1 day(s) ahead of arrival and up to 1 month in advance.", null, HttpStatus.BAD_REQUEST);
         }
-        // calcular la diferencia de 3 dias (maximo de 3 dias)
         daysBetween = DAYS.between(reservation.getArrivalDate(), reservation.getDepartureDate());
         if(daysBetween > 3) {
             return new Response("The campsite can be reserved for max 3 days.", null, HttpStatus.BAD_REQUEST);
         }
-        // END TODO ** //
-
-        this.reservationRepository.save(reservation);
-        return new Response(null, gson.toJson(reservation.getId().toString()), HttpStatus.OK);
+        return null;
     }
-
-    @Override
-    public void updateReservation(Reservation reservation) {
-        // si existe
-        this.reservationRepository.save(reservation);
-    }
-
-    @Override
-    public Response deleteReservation(Long id) {
-        // si existe
-        Reservation reservation = this.reservationRepository.findReservationById(id);
-        if(reservation == null) {
-            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
-        }
-        this.reservationRepository.delete(reservation);
-        return new Response(null, null, HttpStatus.OK);
-    }
-
-    @Override
-    public void getAvailability(LocalDate arrivalDate, LocalDate departureDate) {
-
-    }
-
-
 }

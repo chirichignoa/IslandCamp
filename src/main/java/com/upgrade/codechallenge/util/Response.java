@@ -7,10 +7,10 @@ public class Response {
     @Expose
     private String error;
     @Expose
-    private String content;
+    private Object content;
     private HttpStatus code;
 
-    public Response(String error, String content, HttpStatus code) {
+    public Response(String error, Object content, HttpStatus code) {
         this.error = error;
         this.content = content;
         this.code = code;
@@ -24,11 +24,11 @@ public class Response {
         this.error = error;
     }
 
-    public String getContent() {
+    public Object getContent() {
         return content;
     }
 
-    public void setContent(String content) {
+    public void setContent(Object content) {
         this.content = content;
     }
 
@@ -44,7 +44,7 @@ public class Response {
     public String toString() {
         return "{" +
                 "error:'" + error + '\'' +
-                ", content:'" + content + '\'' +
+                ", content:'" + content.toString() + '\'' +
                 ", code:" + code +
                 '}';
     }

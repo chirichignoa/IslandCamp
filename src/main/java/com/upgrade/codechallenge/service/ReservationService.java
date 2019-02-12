@@ -4,17 +4,19 @@ import com.upgrade.codechallenge.model.Reservation;
 import com.upgrade.codechallenge.util.Response;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public interface ReservationService {
 
     Response getReservations(LocalDate arrivalDate, LocalDate departureDate);
 
+    Response getReservation(String id);
+
     Response saveReservation(Reservation reservation);
 
-    void updateReservation(Reservation reservation);
+    Response updateReservation(String id, Reservation reservation);
 
-    Response deleteReservation(Long id);
+    Response deleteReservation(String id);
 
-    void getAvailability(LocalDate arrivalDate, LocalDate departureDate);
+    Response modifyReservation(String id, Reservation reservation);
+
 }
