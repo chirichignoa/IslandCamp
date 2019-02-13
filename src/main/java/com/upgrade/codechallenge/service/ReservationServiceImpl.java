@@ -1,17 +1,16 @@
 package com.upgrade.codechallenge.service;
 
-import com.google.gson.Gson;
 import com.upgrade.codechallenge.exception.OcuppedDateRangeException;
 import com.upgrade.codechallenge.model.Reservation;
 import com.upgrade.codechallenge.repository.ReservationRepository;
 import com.upgrade.codechallenge.util.Response;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -82,25 +81,38 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public Response updateReservation(String id, Reservation reservation) {
         List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
-        if(reservations == null || reservations.size() == 0) {
-            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
-        }
-        Response x = validateDates(reservation);
-        if (x != null) return x;
+        Response response = checkIfReservationExists(reservations);
+        if(response != null)
+            return response;
+        response= validateDates(reservation);
+        if (response != null) return response;
         int daysBetween = (int) DAYS.between(reservation.getArrivalDate(), reservation.getDepartureDate());
         if(daysBetween != reservations.size()) {
             return new Response("The new reservation's duration must be the same than the previous", null, HttpStatus.BAD_REQUEST);
         }
-        LocalDate previousDate =  reservation.getDepartureDate();
+        // This lines are for move the reservation to a previous date than the arrival date
+        int difference;
+        boolean before = reservations.get(0).getDepartureDate().isAfter(reservation.getArrivalDate());
+        if(before) {
+            difference = (int) DAYS.between(reservation.getArrivalDate(), reservations.get(0).getArrivalDate());
+            Collections.reverse(reservations);
+        } else {
+            difference = (int) DAYS.between(reservations.get(reservations.size() -1).getDepartureDate(), reservation.getDepartureDate());
+        }
         // Reverse order for avoid the unique constraint violation in the BD
         // I assume that the modification maintains the same amount of days
         try {
             for (int i = daysBetween - 1; i >= 0; i--) {
                 Reservation r = reservations.get(i);
-                this.reservationRepository.updateReservationDates(previousDate.minusDays(1),
-                        previousDate,
-                        r.getId());
-                previousDate = previousDate.minusDays(1);
+                if(before) {
+                    this.reservationRepository.updateReservationDates(r.getArrivalDate().minusDays(difference),
+                            r.getDepartureDate().minusDays(difference),
+                            r.getId());
+                } else {
+                    this.reservationRepository.updateReservationDates(r.getArrivalDate().plusDays(difference),
+                            r.getDepartureDate().plusDays(difference),
+                            r.getId());
+                }
             }
             return new Response(null, id, HttpStatus.OK);
         } catch (Exception e) {
@@ -112,32 +124,42 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public Response modifyReservation(String id, Reservation reservation) {
         List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
-        if(reservations == null || reservations.size() == 0) {
-            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
-        }
-        Response x = validateDates(reservation);
-        if (x != null) return x;
+        Response response = checkIfReservationExists(reservations);
+        if(response != null)
+            return response;
+        response = validateDates(reservation);
+        if (response != null) return response;
         int newDaysBetween = (int) DAYS.between(reservation.getArrivalDate(), reservation.getDepartureDate());
         if(newDaysBetween != reservations.size()) {
             return new Response("The new reservation's duration must be the same than the previous", null, HttpStatus.BAD_REQUEST);
         }
-        LocalDate previousDate =  reservation.getDepartureDate();
+        // This lines are for move the reservation to a previous date than the arrival date
+        int difference;
+        boolean before = reservations.get(0).getDepartureDate().isAfter(reservation.getArrivalDate());
+        if(before) {
+            difference = (int) DAYS.between(reservation.getArrivalDate(), reservations.get(0).getArrivalDate());
+            Collections.reverse(reservations);
+        } else {
+            difference = (int) DAYS.between(reservations.get(reservations.size() -1).getDepartureDate(), reservation.getDepartureDate());
+        }
         // Reverse order for avoid the unique constraint violation in the BD
         // I assume that the modification maintains the same amount of days
         try {
             for (int i = newDaysBetween - 1; i >= 0; i--) {
                 Reservation r = reservations.get(i);
-//                r.setArrivalDate(previousDate.minusDays(1));
-//                r.setDepartureDate(previousDate);
-//                r.setName(reservation.getName());
-//                r.setEmail(reservation.getEmail());
-//                this.reservationRepository.save(r);
-                this.reservationRepository.modifyReservation(reservation.getName(),
-                                                            reservation.getEmail(),
-                                                            previousDate.minusDays(1),
-                                                            previousDate,
-                                                            r.getId());
-                previousDate = previousDate.minusDays(1);
+                if(before) {
+                    this.reservationRepository.modifyReservation(reservation.getName(),
+                            reservation.getEmail(),
+                            r.getArrivalDate().minusDays(difference),
+                            r.getDepartureDate().minusDays(difference),
+                            r.getId());
+                } else {
+                    this.reservationRepository.modifyReservation(reservation.getName(),
+                            reservation.getEmail(),
+                            r.getArrivalDate().plusDays(difference),
+                            r.getDepartureDate().plusDays(difference),
+                            r.getId());
+                }
             }
             return new Response(null, id, HttpStatus.OK);
         } catch (Exception e ) {
@@ -149,9 +171,9 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public Response deleteReservation(String id) {
         List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
-        if(reservations == null || reservations.size() == 0) {
-            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
-        }
+        Response r = checkIfReservationExists(reservations);
+        if(r != null)
+            return r;
         try {
             for (Reservation reservation : reservations) {
                 this.reservationRepository.delete(reservation);
@@ -174,6 +196,13 @@ public class ReservationServiceImpl implements ReservationService {
         daysBetween = DAYS.between(reservation.getArrivalDate(), reservation.getDepartureDate());
         if(daysBetween > 3) {
             return new Response("The campsite can be reserved for max 3 days.", null, HttpStatus.BAD_REQUEST);
+        }
+        return null;
+    }
+
+    private Response checkIfReservationExists(List<Reservation> reservations) {
+        if(reservations == null || reservations.size() == 0) {
+            return new Response("Reservation does not exist", null, HttpStatus.NOT_FOUND);
         }
         return null;
     }
