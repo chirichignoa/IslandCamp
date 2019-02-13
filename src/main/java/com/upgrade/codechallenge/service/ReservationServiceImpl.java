@@ -1,5 +1,6 @@
 package com.upgrade.codechallenge.service;
 
+import com.upgrade.codechallenge.exception.InternalServerErrorException;
 import com.upgrade.codechallenge.exception.OcuppedDateRangeException;
 import com.upgrade.codechallenge.model.Reservation;
 import com.upgrade.codechallenge.repository.ReservationRepository;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -22,6 +24,10 @@ public class ReservationServiceImpl implements ReservationService {
     @Autowired
     private ReservationRepository reservationRepository;
 
+    public ReservationServiceImpl(ReservationRepository reservationRepository) {
+        this.reservationRepository = reservationRepository;
+    }
+
     @Override
     @Transactional
     public Response saveReservation(Reservation body) {
@@ -29,7 +35,7 @@ public class ReservationServiceImpl implements ReservationService {
             return new Response("You must specify an arrival date.", null, HttpStatus.BAD_REQUEST);
         }
         if(body.getDepartureDate() == null) {
-            return new Response("You must specify an departure date.", null, HttpStatus.BAD_REQUEST);
+            return new Response("You must specify a departure date.", null, HttpStatus.BAD_REQUEST);
         }
 
         Response x = validateDates(body);
@@ -180,7 +186,7 @@ public class ReservationServiceImpl implements ReservationService {
             }
             return new Response(null, null, HttpStatus.OK);
         } catch (Exception e) {
-            return new Response("There is an internal problem in the server.", null, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new InternalServerErrorException("There is an internal problem in the server.");
         }
     }
 

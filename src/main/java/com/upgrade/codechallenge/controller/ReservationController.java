@@ -28,6 +28,10 @@ public class ReservationController {
     @Autowired
     private ReservationService reservationService;
 
+    public ReservationController(ReservationService reservationService) {
+        this.reservationService = reservationService;
+    }
+
     // POST
     @RequestMapping(value = "/reservation", method = RequestMethod.POST,
             produces = "application/json; charset=utf-8",

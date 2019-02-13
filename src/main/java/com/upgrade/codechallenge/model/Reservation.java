@@ -34,6 +34,13 @@ public class Reservation {
         this.resourceId = resourceId;
     }
 
+    public Reservation(LocalDate arrivalDate, LocalDate departureDate, String name, String email) {
+        this.arrivalDate = arrivalDate;
+        this.departureDate = departureDate;
+        this.name = name;
+        this.email = email;
+    }
+
     public Long getId() {
         return id;
     }

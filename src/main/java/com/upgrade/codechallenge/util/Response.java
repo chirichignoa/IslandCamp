@@ -3,6 +3,8 @@ package com.upgrade.codechallenge.util;
 import com.google.gson.annotations.Expose;
 import org.springframework.http.HttpStatus;
 
+import java.util.Objects;
+
 public class Response {
     @Expose
     private String error;
@@ -42,10 +44,26 @@ public class Response {
 
     @Override
     public String toString() {
+        String content = (this.content == null)? "null" : this.content.toString();
         return "{" +
                 "error:'" + error + '\'' +
-                ", content:'" + content.toString() + '\'' +
+                ", content:'" + content + '\'' +
                 ", code:" + code +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Response response = (Response) o;
+        return Objects.equals(error, response.error) &&
+                Objects.equals(content, response.content) &&
+                code == response.code;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(error, content, code);
     }
 }
