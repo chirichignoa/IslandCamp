@@ -16,8 +16,6 @@ The system have to allow the following functionality:
 
 To make a reservation the user will provide his/her email & full name at the time of reserving the campsite along with intended arrival date and departure date. Also, these reservation can be modified or deleted.
 
-------
-
 ## Technologies
 
 The application was built using Java with Spring Boot to expose REST methods. For persists the data, the system uses Hibernate and JPA, with a H2 database.
@@ -40,11 +38,11 @@ The REST API provides different endpoints (Table 1) to satisfy the above require
 
 By a POST request, the user is able to create a new reservation into the system. In the system, a single reservation is represented with the same number of entities as the reservation days expressed in the request. For example, if a user wants to reserve the camp for three days until 2019-02-22 to 2019-02-25, into the system there will be three entities with one day duration each. One until 2019-02-22 to 2019-02-23, another to 2019-02-23 to 2019-02-24 and one last until 2019-02-24 to 2019-02-25.
 
-##### URL
+#### URL
 
 `POST /reservation`
 
-##### Data Params
+#### Data Params
 
 The data required by the camp is sent into the body requests (`name`, `email`, `arrivalDate` and `departureDate`) in JSON format. 
 
@@ -59,7 +57,7 @@ The dates fields, will be in format `'YYYY-MM-DD'`, and both the name and email 
       `"email": "jp@gmail.com"`
   `}`
 
-##### Success Response
+#### Success Response
 
 - **HTTP Status:** 200 OK
 
@@ -70,7 +68,7 @@ The dates fields, will be in format `'YYYY-MM-DD'`, and both the name and email 
       `"content": "6018f3a7-054d-4d72-9bd4-e5722ebe1699"`
   `}`
 
-##### Error Response
+#### Error Response
 
 1. If arrival date is missing:
 
@@ -149,7 +147,7 @@ The dates fields, will be in format `'YYYY-MM-DD'`, and both the name and email 
          "content": null
      }`
 
-##### Example
+#### Example
 
 `POST /reservation`
 
@@ -164,17 +162,17 @@ The dates fields, will be in format `'YYYY-MM-DD'`, and both the name and email 
 
 Using a GET method, the system will return a list of all reservations stored in the system representation way, as mentioned before in POST method. This endpoint its for check the disponibility at specified range date in the query params.
 
-##### URL
+#### URL
 
 `GET /reservation`
 
-##### Query Params
+#### Query Params
 
 `arrival` = A arrival date for check the disponibility. It must be in `'YYYY-MM-DD'` format. **Mandatory parameter**.
 
 `departure` = A arrival date for check the disponibility. It must be in `'YYYY-MM-DD'` format. If its missing, the system uses by default one month after than arrival date.
 
-##### Success Response
+#### Success Response
 
 - **HTTP Status:** 200 OK
 
@@ -206,7 +204,7 @@ Using a GET method, the system will return a list of all reservations stored in 
           }
       ]`}`
 
-##### Error Response
+#### Error Response
 
 1. If arrival date is missing:
 
@@ -230,7 +228,7 @@ Using a GET method, the system will return a list of all reservations stored in 
          "content": null
      }`
 
-##### Example
+#### Example
 
 `GET /reservation?arrival=2019-02-19&2019-02-22`
 
@@ -238,15 +236,15 @@ Using a GET method, the system will return a list of all reservations stored in 
 
 Using this GET endpoint, the system will return a determined reservation in the system representation way, as mentioned before in POST method.
 
-##### URL
+#### URL
 
 `GET /reservation/{id}`
 
-##### Query Params
+#### Query Params
 
 `id` = A identifier associated to a reservation. **Mandatory parameter**.
 
-##### Success Response
+#### Success Response
 
 - **HTTP Status:** 200 OK
 
@@ -278,7 +276,7 @@ Using this GET endpoint, the system will return a determined reservation in the 
           }
       ]`}`
 
-##### Error Response
+Error Response
 
 1. If id is missing:
 
@@ -302,7 +300,7 @@ Using this GET endpoint, the system will return a determined reservation in the 
          "content": null
      }`
 
-##### Example
+#### Example
 
 `GET /reservations/6018f3a7-054d-4d72-9bd4-e5722ebe1699`
 
@@ -310,15 +308,15 @@ Using this GET endpoint, the system will return a determined reservation in the 
 
 Using a PATCH request, the user is able to modify a existing reservation. Only can modify the reservation date range (arrival date and departure date) with a new that has the same duration than the previous one.
 
-##### URL
+#### URL
 
 `PATCH /reservation/{id}`
 
-##### Query Params
+#### Query Params
 
 `id` = A identifier associated to a reservation. **Mandatory parameter**.
 
-##### Data Params
+#### Data Params
 
 The data required to modify an existing reservation is sent into the body requests (arrival date and departure date) in JSON format. 
 
@@ -332,7 +330,7 @@ The dates fields, will be in format `'YYYY-MM-DD'`. All the parameters are manda
 
   `}`
 
-##### Success Response
+#### Success Response
 
 - **HTTP Status:** 200 OK
 
@@ -343,7 +341,7 @@ The dates fields, will be in format `'YYYY-MM-DD'`. All the parameters are manda
       `"content": "6018f3a7-054d-4d72-9bd4-e5722ebe1699"`
   `}`
 
-##### Error Response
+#### Error Response
 
 1. If id is missing:
 
@@ -433,7 +431,7 @@ The dates fields, will be in format `'YYYY-MM-DD'`. All the parameters are manda
          "content": null
      }`
 
-##### Example
+#### Example
 
 `PATCH /reservation/6018f3a7-054d-4d72-9bd4-e5722ebe1699`
 
@@ -446,20 +444,20 @@ The dates fields, will be in format `'YYYY-MM-DD'`. All the parameters are manda
 
 Using a DELETE request, the user is able to delete a existing reservation. The system will delete all reservation entities that it created, as mentioned before in POST method.
 
-##### URL
+#### URL
 
 `DELETE /reservation/{id}`
 
-##### Query Params
+#### Query Params
 
 `id` = A identifier associated to a reservation. **Mandatory parameter**.
 
-##### Success Response
+#### Success Response
 
 - **HTTP Status:** 200 OK
 - **Content:** empty body.
 
-##### Error Response
+Error Response
 
 1. If id is missing:
 
@@ -494,6 +492,6 @@ Using a DELETE request, the user is able to delete a existing reservation. The s
         ` "content": null`
      `}`
 
-##### Example
+#### Example
 
 `DELETE /reservation/6018f3a7-054d-4d72-9bd4-e5722ebe1699`
