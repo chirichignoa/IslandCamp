@@ -22,14 +22,4 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     void updateReservationDates(@Param("arrival_date") LocalDate arrivalDate,
                            @Param("departure_date") LocalDate departureDate,
                            @Param("id") Long id);
-
-    @Transactional
-    @Modifying(clearAutomatically = true)
-    @Query(value = "UPDATE Reservation r SET r.name = :name, r.email = :email," +
-            " r.arrivalDate = :arrival_date,  r.departureDate = :departure_date WHERE r.id = :id")
-    void modifyReservation(@Param("name") String name,
-                           @Param("email") String email,
-                           @Param("arrival_date") LocalDate arrivalDate,
-                            @Param("departure_date") LocalDate departureDate,
-                            @Param("id") Long id);
 }

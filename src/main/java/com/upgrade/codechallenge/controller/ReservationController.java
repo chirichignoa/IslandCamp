@@ -96,25 +96,6 @@ public class ReservationController {
                 .body(gson.toJson(response));
     }
 
-    // PUT
-    @RequestMapping(value = "/reservation/{id}", method = RequestMethod.PUT,
-            produces = "application/json; charset=utf-8",
-            consumes = "application/json; charset=utf-8")
-    public @ResponseBody
-    ResponseEntity<String> modifyReservation(@PathVariable String id, @RequestBody Reservation reservation) {
-        ResponseEntity<String> idError = this.validateId(id);
-        if(idError != null) return idError;
-        Response response;
-        try {
-            response = this.reservationService.modifyReservation(id, reservation);
-        } catch(OcuppedDateRangeException e) {
-            response = new Response(e.getMessage(), null, HttpStatus.BAD_REQUEST);
-        }
-        return ResponseEntity.status(response.getCode())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(gson.toJson(response));
-    }
-
     // DELETE /reservation - params(reservationId)
     @RequestMapping(value = "/reservation/{id}", method = RequestMethod.DELETE,
             produces = "application/json; charset=utf-8")
