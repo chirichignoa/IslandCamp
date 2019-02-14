@@ -17,6 +17,4 @@ public interface ReservationService {
 
     Response deleteReservation(String id);
 
-    Response modifyReservation(String id, Reservation reservation);
-
 }

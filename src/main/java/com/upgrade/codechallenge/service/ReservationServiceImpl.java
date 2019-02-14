@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpServerErrorException;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -122,53 +121,6 @@ public class ReservationServiceImpl implements ReservationService {
             }
             return new Response(null, id, HttpStatus.OK);
         } catch (Exception e) {
-            throw new OcuppedDateRangeException("The camp is already reserved for that date range.");
-        }
-    }
-
-    @Override
-    @Transactional
-    public Response modifyReservation(String id, Reservation reservation) {
-        List<Reservation> reservations = this.reservationRepository.findReservationByResourceId(id);
-        Response response = checkIfReservationExists(reservations);
-        if(response != null)
-            return response;
-        response = validateDates(reservation);
-        if (response != null) return response;
-        int newDaysBetween = (int) DAYS.between(reservation.getArrivalDate(), reservation.getDepartureDate());
-        if(newDaysBetween != reservations.size()) {
-            return new Response("The new reservation's duration must be the same than the previous", null, HttpStatus.BAD_REQUEST);
-        }
-        // This lines are for move the reservation to a previous date than the arrival date
-        int difference;
-        boolean before = reservations.get(0).getDepartureDate().isAfter(reservation.getArrivalDate());
-        if(before) {
-            difference = (int) DAYS.between(reservation.getArrivalDate(), reservations.get(0).getArrivalDate());
-            Collections.reverse(reservations);
-        } else {
-            difference = (int) DAYS.between(reservations.get(reservations.size() -1).getDepartureDate(), reservation.getDepartureDate());
-        }
-        // Reverse order for avoid the unique constraint violation in the BD
-        // I assume that the modification maintains the same amount of days
-        try {
-            for (int i = newDaysBetween - 1; i >= 0; i--) {
-                Reservation r = reservations.get(i);
-                if(before) {
-                    this.reservationRepository.modifyReservation(reservation.getName(),
-                            reservation.getEmail(),
-                            r.getArrivalDate().minusDays(difference),
-                            r.getDepartureDate().minusDays(difference),
-                            r.getId());
-                } else {
-                    this.reservationRepository.modifyReservation(reservation.getName(),
-                            reservation.getEmail(),
-                            r.getArrivalDate().plusDays(difference),
-                            r.getDepartureDate().plusDays(difference),
-                            r.getId());
-                }
-            }
-            return new Response(null, id, HttpStatus.OK);
-        } catch (Exception e ) {
             throw new OcuppedDateRangeException("The camp is already reserved for that date range.");
         }
     }
