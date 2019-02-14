@@ -3,20 +3,17 @@ package com.upgrade.codechallenge;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.upgrade.codechallenge.exception.InternalServerErrorException;
-import com.upgrade.codechallenge.exception.OcuppedDateRangeException;
+import com.upgrade.codechallenge.exception.OccupiedDateRangeException;
 import com.upgrade.codechallenge.model.Reservation;
 import com.upgrade.codechallenge.repository.ReservationRepository;
 import com.upgrade.codechallenge.service.ReservationServiceImpl;
 import com.upgrade.codechallenge.util.Response;
-import org.apache.tomcat.jni.Local;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -316,14 +313,14 @@ public class ReservationServiceTests {
         Mockito.when(this.reservationRepository.findReservationByResourceId(Mockito.anyString()))
                 .thenReturn(reservationList);
 
-        Mockito.doThrow(new OcuppedDateRangeException("The camp is already reserved for that date range."))
+        Mockito.doThrow(new OccupiedDateRangeException("The camp is already reserved for that date range."))
                 .when(this.reservationRepository)
                 .updateReservationDates(Mockito.any(LocalDate.class), Mockito.any(LocalDate.class),Mockito.anyLong());
 
         Reservation toModify = new Reservation(LocalDate.now().plusDays(8), LocalDate.now().plusDays(11), null, null, resourceId);
         try {
             Response response = this.reservationService.updateReservation(resourceId,toModify);
-        } catch (OcuppedDateRangeException e) {
+        } catch (OccupiedDateRangeException e) {
             assertThat(e.getMessage()).isEqualTo("The camp is already reserved for that date range.");
         }
     }

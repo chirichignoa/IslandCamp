@@ -1,7 +1,7 @@
 package com.upgrade.codechallenge.service;
 
 import com.upgrade.codechallenge.exception.InternalServerErrorException;
-import com.upgrade.codechallenge.exception.OcuppedDateRangeException;
+import com.upgrade.codechallenge.exception.OccupiedDateRangeException;
 import com.upgrade.codechallenge.model.Reservation;
 import com.upgrade.codechallenge.repository.ReservationRepository;
 import com.upgrade.codechallenge.util.Response;
@@ -52,7 +52,7 @@ public class ReservationServiceImpl implements ReservationService {
             }
             return new Response(null, resourceId, HttpStatus.OK);
         } catch (Exception e) {
-            throw new OcuppedDateRangeException("The camp is already reserved for that date range.");
+            throw new OccupiedDateRangeException("The camp is already reserved for that date range.");
         }
     }
 
@@ -121,7 +121,7 @@ public class ReservationServiceImpl implements ReservationService {
             }
             return new Response(null, id, HttpStatus.OK);
         } catch (Exception e) {
-            throw new OcuppedDateRangeException("The camp is already reserved for that date range.");
+            throw new OccupiedDateRangeException("The camp is already reserved for that date range.");
         }
     }
 

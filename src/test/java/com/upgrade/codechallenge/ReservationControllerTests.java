@@ -3,14 +3,11 @@ package com.upgrade.codechallenge;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.jayway.jsonpath.JsonPath;
 import com.upgrade.codechallenge.controller.ReservationController;
 import com.upgrade.codechallenge.exception.InternalServerErrorException;
-import com.upgrade.codechallenge.exception.OcuppedDateRangeException;
+import com.upgrade.codechallenge.exception.OccupiedDateRangeException;
 import com.upgrade.codechallenge.model.Reservation;
-import com.upgrade.codechallenge.repository.ReservationRepository;
 import com.upgrade.codechallenge.service.ReservationService;
-import com.upgrade.codechallenge.service.ReservationServiceImpl;
 import com.upgrade.codechallenge.util.Response;
 import org.json.JSONObject;
 import org.junit.Before;
@@ -20,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.json.JacksonTester;
@@ -92,7 +88,7 @@ public class ReservationControllerTests {
 	public void shouldNotCreateReservationCampReserved() throws Exception {
 		Mockito.when(reservationService
 				.saveReservation(Mockito.any(Reservation.class)))
-				.thenThrow(new OcuppedDateRangeException("The camp is already reserved for that date range."));
+				.thenThrow(new OccupiedDateRangeException("The camp is already reserved for that date range."));
 
 		JSONObject reservation = new JSONObject();
 		reservation.put("arrivalDate", LocalDate.now().plusDays(3));
@@ -393,7 +389,7 @@ public class ReservationControllerTests {
 		String resourceId = UUID.randomUUID().toString();
 		Mockito.when(reservationService
 				.updateReservation(Mockito.any(String.class), Mockito.any(Reservation.class)))
-				.thenThrow(new OcuppedDateRangeException("The camp is already reserved for that date range."));
+				.thenThrow(new OccupiedDateRangeException("The camp is already reserved for that date range."));
 
 		// The new reservation is for two days
 		JSONObject reservation = new JSONObject();

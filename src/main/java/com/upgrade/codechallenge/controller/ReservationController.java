@@ -3,7 +3,7 @@ package com.upgrade.codechallenge.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.upgrade.codechallenge.exception.OcuppedDateRangeException;
+import com.upgrade.codechallenge.exception.OccupiedDateRangeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -41,7 +41,7 @@ public class ReservationController {
         Response response;
         try {
             response = this.reservationService.saveReservation(reservation);
-        } catch(OcuppedDateRangeException e) {
+        } catch(OccupiedDateRangeException e) {
             response = new Response(e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
         return ResponseEntity.status(response.getCode())
@@ -88,7 +88,7 @@ public class ReservationController {
         Response response;
         try {
             response = this.reservationService.updateReservation(id, reservation);
-        } catch(OcuppedDateRangeException e) {
+        } catch(OccupiedDateRangeException e) {
             response = new Response(e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
         return ResponseEntity.status(response.getCode())
